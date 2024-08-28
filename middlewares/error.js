@@ -31,11 +31,11 @@ export const errorMiddleware = (err, req, res, next) => {
         .map((error) => error.message)
         .join(" ")
     : err.message;
-};
 
-return res.status(err.statusCode).json({
-  success: false,
-  message: errorMessage,
-});
+  return res.status(err.statusCode).json({
+    success: false,
+    message: errorMessage,
+  });
+};
 
 export default ErrorHandler;

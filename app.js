@@ -31,8 +31,8 @@ app.use(
   })
 );
 
-app.use("api/v1/message", messageRouter);
-app.use("api/v1/user", userRouter);
+app.use("/api/v1/message", messageRouter);
+app.use("/api/v1/user", userRouter);
 
 dbConnection();
 app.use(errorMiddleware);

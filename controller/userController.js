@@ -71,6 +71,10 @@ export const register = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const login = catchAsyncErrors(async (req, res, next) => {
+  const { token } = req.cookies;
+  if (token) {
+    return next(new ErrorHandler("User already logged in!", 400));
+  }
   const { email, password } = req.body;
   if (!email || !password) {
     return next(new ErrorHandler("Provide Email And Password!", 400));
@@ -121,7 +125,7 @@ export const updateProfile = catchAsyncErrors(async (req, res, next) => {
     linkedinURL: req.body.linkedinURL,
     telegramURL: req.body.telegramURL,
   };
-  if (req.files & req.files.avatar) {
+  if (req.files && req.files.avatar) {
     const avatar = req.files.avatar;
     const user = await User.findById(req.user.id);
     const profileImageId = user.avatar.public_id;
@@ -135,7 +139,7 @@ export const updateProfile = catchAsyncErrors(async (req, res, next) => {
       url: cloudinaryResponse.secure_url,
     };
   }
-  if (req.files & req.files.resume) {
+  if (req.files && req.files.resume) {
     const resume = req.files.resume;
     const user = await User.findById(req.user.id);
     const resumeId = user.resume.public_id;

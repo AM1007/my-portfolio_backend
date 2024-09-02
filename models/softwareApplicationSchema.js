@@ -1,7 +1,9 @@
 import mongoose from "mongoose";
 
 const softwareAppicationSchema = new mongoose.Schema({
-  name: String,
+  name: {
+    type: String,
+  },
   svg: {
     public_id: {
       type: String,

@@ -5,18 +5,13 @@ import { v2 as cloudinary } from "cloudinary";
 
 export const addNewSkill = catchAsyncErrors(async (req, res, next) => {
   if (!req.files || Object.keys(req.files).length === 0) {
-    return next(new ErrorHandler("Skill svg Required!", 400));
+    return next(new ErrorHandler("Skill svg Required!", 404));
   }
   const { svg } = req.files;
-  const { time, proficency } = req.body;
-  if (!title || !proficency) {
+  const { title, proficiency } = req.body;
+  if (!title || !proficiency) {
     return next(new ErrorHandler("Please Fill Full Form!", 400));
   }
-
-  if (!name) {
-    return next(new ErrorHandler("Software's Name Is Required!", 400));
-  }
-
   const cloudinaryResponse = await cloudinary.uploader.upload(
     svg.tempFilePath,
     { folder: "PORTFOLIO_SKILLS_SVG" }
@@ -27,10 +22,9 @@ export const addNewSkill = catchAsyncErrors(async (req, res, next) => {
       cloudinaryResponse.error || "Unknown Cloudinary error"
     );
   }
-
   const skill = await Skill.create({
     title,
-    proficency,
+    proficiency,
     svg: {
       public_id: cloudinaryResponse.public_id,
       url: cloudinaryResponse.secure_url,
@@ -59,22 +53,27 @@ export const deleteNewSkill = catchAsyncErrors(async (req, res, next) => {
 
 export const updateSkill = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  const skill = await Skill.findById(id);
+  let skill = await Skill.findById(id);
   if (!skill) {
-    return next(new ErrorHandler("Skill Not Found!", 400));
+    return next(new ErrorHandler("Skill not found!", 404));
   }
-  const proficency = req.body;
+  const { proficiency } = req.body;
   skill = await Skill.findByIdAndUpdate(
     id,
-    { proficency },
-    { new: true, runValidators: true, useFindAndModify: false }
+    { proficiency },
+    {
+      new: true,
+      runValidators: true,
+      useFindAndModify: false,
+    }
   );
   res.status(200).json({
     success: true,
-    message: "Skill Updated",
+    message: "Skill Updated!",
     skill,
   });
 });
+
 export const getAllSkills = catchAsyncErrors(async (req, res, next) => {
   const skills = await Skill.find();
   res.status(200).json({

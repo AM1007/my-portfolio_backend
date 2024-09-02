@@ -1,8 +1,12 @@
 import mongoose from "mongoose";
 
 const skillSchema = new mongoose.Schema({
-  title: String,
-  proficency: String,
+  title: {
+    type: String,
+  },
+  proficiency: {
+    type: Number,
+  },
   svg: {
     public_id: {
       type: String,

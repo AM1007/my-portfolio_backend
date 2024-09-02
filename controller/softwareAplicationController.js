@@ -6,7 +6,7 @@ import { v2 as cloudinary } from "cloudinary";
 export const addNewApplication = catchAsyncErrors(async (req, res, next) => {
   if (!req.files || Object.keys(req.files).length === 0) {
     return next(
-      new ErrorHandler("Software Application Icon/SVG Required!", 400)
+      new ErrorHandler("Software Application Icon/SVG Required!", 404)
     );
   }
   const { svg } = req.files;
@@ -18,13 +18,14 @@ export const addNewApplication = catchAsyncErrors(async (req, res, next) => {
 
   const cloudinaryResponse = await cloudinary.uploader.upload(
     svg.tempFilePath,
-    { folder: "PORTFOLIO_SOFTWARE_APPLICATIONS" }
+    { folder: "PORTFOLIO_SOFTWARE_APPLICATION_IMAGES" }
   );
   if (!cloudinaryResponse || cloudinaryResponse.error) {
     console.error(
       "Cloudinary Error:",
       cloudinaryResponse.error || "Unknown Cloudinary error"
     );
+    return next(new ErrorHandler("Failed to upload avatar to Cloudinary", 500));
   }
 
   const softwareApplication = await SoftwareApplication.create({
@@ -45,7 +46,7 @@ export const deleteApplication = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   const softwareApplication = await SoftwareApplication.findById(id);
   if (!softwareApplication) {
-    return next(new ErrorHandler("Software Application Not Found!", 400));
+    return next(new ErrorHandler("Software Application Not Found!", 404));
   }
   const softwareApplicationSvgId = softwareApplication.svg.public_id;
   await cloudinary.uploader.destroy(softwareApplicationSvgId);

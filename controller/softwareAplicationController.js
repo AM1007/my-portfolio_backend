@@ -6,14 +6,14 @@ import { v2 as cloudinary } from "cloudinary";
 export const addNewApplication = catchAsyncErrors(async (req, res, next) => {
   if (!req.files || Object.keys(req.files).length === 0) {
     return next(
-      new ErrorHandler("Software Application Icon/SVG Required!", 404)
+      new ErrorHandler("Please provide a software application icon.", 404)
     );
   }
   const { svg } = req.files;
   const { name } = req.body;
 
   if (!name) {
-    return next(new ErrorHandler("Software's Name Is Required!", 400));
+    return next(new ErrorHandler("Please enter the software's name.", 400));
   }
 
   const cloudinaryResponse = await cloudinary.uploader.upload(
@@ -22,10 +22,12 @@ export const addNewApplication = catchAsyncErrors(async (req, res, next) => {
   );
   if (!cloudinaryResponse || cloudinaryResponse.error) {
     console.error(
-      "Cloudinary Error:",
-      cloudinaryResponse.error || "Unknown Cloudinary error"
+      "Error with Cloudinary:",
+      cloudinaryResponse.error || "An unknown error occurred with Cloudinary."
     );
-    return next(new ErrorHandler("Failed to upload avatar to Cloudinary", 500));
+    return next(
+      new ErrorHandler("Failed to upload the icon to Cloudinary.", 500)
+    );
   }
 
   const softwareApplication = await SoftwareApplication.create({
@@ -35,9 +37,9 @@ export const addNewApplication = catchAsyncErrors(async (req, res, next) => {
       url: cloudinaryResponse.secure_url,
     },
   });
-  res.status(200).json({
+  res.status(201).json({
     success: true,
-    message: "New Software Application Added!",
+    message: "A new software application has been added!",
     softwareApplication,
   });
 });
@@ -46,14 +48,16 @@ export const deleteApplication = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   const softwareApplication = await SoftwareApplication.findById(id);
   if (!softwareApplication) {
-    return next(new ErrorHandler("Software Application Not Found!", 404));
+    return next(
+      new ErrorHandler("The software application could not be found.", 404)
+    );
   }
   const softwareApplicationSvgId = softwareApplication.svg.public_id;
   await cloudinary.uploader.destroy(softwareApplicationSvgId);
   await softwareApplication.deleteOne();
   res.status(200).json({
     success: true,
-    message: "Softwar Application Deleted!",
+    message: "The software application has been deleted.",
   });
 });
 

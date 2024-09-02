@@ -3,16 +3,16 @@ import mongoose from "mongoose";
 const timelineSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: [true, "Title Required!"],
+    required: [true, "Please provide a title."],
   },
   description: {
     type: String,
-    required: [true, "Description Required!"],
+    required: [true, "Please provide a title description."],
   },
   timeline: {
     from: {
       type: String,
-      required: [true, "Timeline Starting Date is Required!"],
+      required: [true, "The timeline starting date is required."],
     },
     to: {
       type: String,

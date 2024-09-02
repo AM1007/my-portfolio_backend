@@ -8,7 +8,9 @@ import crypto from "crypto";
 
 export const register = catchAsyncErrors(async (req, res, next) => {
   if (!req.files || Object.keys(req.files).length === 0) {
-    return next(new ErrorHandler("Avatar and Resume are Required!", 400));
+    return next(
+      new ErrorHandler("Please provide both an avatar and a resume.", 400)
+    );
   }
   const { avatar, resume } = req.files;
 
@@ -19,10 +21,13 @@ export const register = catchAsyncErrors(async (req, res, next) => {
   );
   if (!cloudinaryResponseForAvatar || cloudinaryResponseForAvatar.error) {
     console.error(
-      "Cloudinary Error:",
-      cloudinaryResponseForAvatar.error || "Unknown Cloudinary error"
+      "Error with Cloudinary:",
+      cloudinaryResponseForAvatar.error ||
+        "An unknown error occurred with Cloudinary."
     );
-    return next(new ErrorHandler("Failed to upload avatar to Cloudinary", 500));
+    return next(
+      new ErrorHandler("Failed to upload the icon to Cloudinary.", 500)
+    );
   }
 
   const cloudinaryResponseForResume = await cloudinary.uploader.upload(
@@ -31,8 +36,12 @@ export const register = catchAsyncErrors(async (req, res, next) => {
   );
   if (!cloudinaryResponseForResume || cloudinaryResponseForResume.error) {
     console.error(
-      "Cloudinary Error:",
-      cloudinaryResponseForResume.error || "Unknown Cloudinary Error"
+      "Error with Cloudinary:",
+      cloudinaryResponseForResume.error ||
+        "An unknown error occurred with Cloudinary."
+    );
+    return next(
+      new ErrorHandler("Failed to upload the resume to Cloudinary.", 500)
     );
   }
 
@@ -67,27 +76,29 @@ export const register = catchAsyncErrors(async (req, res, next) => {
       url: cloudinaryResponseForResume.secure_url,
     },
   });
-  generateToken(user, "User Registered", 201, res);
+  generateToken(user, "User successfully registered!", 201, res);
 });
 
 export const login = catchAsyncErrors(async (req, res, next) => {
   const { token } = req.cookies;
   if (token) {
-    return next(new ErrorHandler("User already logged in!", 400));
+    return next(new ErrorHandler("The user is already logged in.", 400));
   }
   const { email, password } = req.body;
   if (!email || !password) {
-    return next(new ErrorHandler("Provide Email And Password!", 400));
+    return next(
+      new ErrorHandler("Please provide your email and password.", 404)
+    );
   }
   const user = await User.findOne({ email }).select("+password");
   if (!user) {
-    return next(new ErrorHandler("Invalid Email Or Password!", 404));
+    return next(new ErrorHandler("The email or password is incorrect.", 404));
   }
   const isPasswordMatched = await user.comparePassword(password);
   if (!isPasswordMatched) {
-    return next(new ErrorHandler("Invalid Email Or Password", 401));
+    return next(new ErrorHandler("The email or password is incorrect.", 401));
   }
-  generateToken(user, "Login Successfully!", 200, res);
+  generateToken(user, "Logged in successfully!", 200, res);
 });
 
 export const logout = catchAsyncErrors(async (req, res, next) => {
@@ -99,14 +110,14 @@ export const logout = catchAsyncErrors(async (req, res, next) => {
     })
     .json({
       success: true,
-      message: "Logged Out!",
+      message: "Logged out successfully!",
     });
 });
 
 export const getUser = catchAsyncErrors(async (req, res, next) => {
   const user = await User.findById(req.user._id);
   if (!user) {
-    return next(new ErrorHandler("User not found", 404));
+    return next(new ErrorHandler("The user could not be found.", 404));
   }
   res.status(200).json({
     success: true,
@@ -160,7 +171,7 @@ export const updateProfile = catchAsyncErrors(async (req, res, next) => {
   });
   res.status(200).json({
     success: true,
-    message: "Profile Updated!",
+    message: "Profile updated successfully!",
     user,
   });
 });
@@ -168,23 +179,23 @@ export const updateProfile = catchAsyncErrors(async (req, res, next) => {
 export const updatePassword = catchAsyncErrors(async (req, res, next) => {
   const { currentPassword, newPassword, confirmNewPassword } = req.body;
   if (!currentPassword || !newPassword || !confirmNewPassword) {
-    return next(new ErrorHandler("Please Fill All Fields.", 400));
+    return next(new ErrorHandler("Please fill in all the fields.", 400));
   }
   const user = await User.findById(req.user.id).select("+password");
   const isPasswordMatched = await user.comparePassword(currentPassword);
   if (!isPasswordMatched) {
-    return next(new ErrorHandler("Incorrect Current Password.", 400));
+    return next(new ErrorHandler("The current password is incorrect.", 400));
   }
   if (newPassword !== confirmNewPassword) {
     return next(
-      new ErrorHandler("New Password and Confirm Password do not match.", 400)
+      new ErrorHandler("The new password and confirmation do not match.", 400)
     );
   }
   user.password = newPassword;
   await user.save();
   res.status(200).json({
     success: true,
-    message: "Password Updated!",
+    message: "Password updated successfully!",
   });
 });
 
@@ -210,7 +221,7 @@ export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
   try {
     await sendEmail({
       email: user.email,
-      subject: "Personal Portfolio Dashboard Recovery Password",
+      subject: "Personal Portfolio Dashboard Password Recovery",
       message,
     });
     res.status(200).json({
@@ -239,17 +250,19 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
   if (!user) {
     return next(
       new ErrorHandler(
-        "Reset Password token is invalid or has been expired",
+        "The password reset token is either invalid or has expired.",
         400
       )
     );
   }
   if (req.body.password !== req.body.confirmPassword) {
-    return next(new ErrorHandler("Password and Confirm do not match."));
+    return next(
+      new ErrorHandler("The password and confirmation do not match.")
+    );
   }
   user.password = req.body.password;
   user.resetPasswordExpire = undefined;
   user.resetPasswordToken = undefined;
   await user.save();
-  generateToken(user, "Reset Password Successfully!", 200, res);
+  generateToken(user, "Password has been successfully reset!", 200, res);
 });
